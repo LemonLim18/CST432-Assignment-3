@@ -1,0 +1,4 @@
+purple: GPIO17 - LED
+green: GPIO22 - Buzzer
+blue: GPIO23 - Button
+white: GPIO24 - Motion Sensor

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hardware Setup Guide - Alarm System</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+          Arial, sans-serif;
+        line-height: 1.6;
+        color: #24292e;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      h1,
+      h2,
+      h3 {
+        border-bottom: 1px solid #eaecef;
+        padding-bottom: 0.3em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+      }
+      th,
+      td {
+        border: 1px solid #dfe2e5;
+        padding: 6px 13px;
+      }
+      th {
+        background-color: #f6f8fa;
+      }
+      tr:nth-child(2n) {
+        background-color: #f6f8fa;
+      }
+      code {
+        background-color: #f6f8fa;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 85%;
+      }
+      pre {
+        background-color: #f6f8fa;
+        padding: 16px;
+        overflow: auto;
+        border-radius: 3px;
+      }
+      blockquote {
+        border-left: 0.25em solid #dfe2e5;
+        color: #6a737d;
+        padding: 0 1em;
+        margin: 0;
+      }
+      .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+      }
+      .alert-important {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hardware Setup Guide - Alarm System</h1>
+
+    <p>
+      This guide details the components and wiring required to run the
+      <code>alarm.S</code> program on a <strong>Raspberry Pi 4 Model B</strong>.
+    </p>
+
+    <div class="alert alert-important">
+      <strong>IMPORTANT:</strong> The assembly code expects
+      <strong>Active High</strong> inputs. This means the pins must read
+      <strong>3.3V (Logic 1)</strong> to trigger the alarm. You MUST use
+      <strong>Pull-Down Resistors</strong> (to Ground) for the button to ensure
+      it reads 0V when not pressed.
+    </div>
+
+    <h2>Component List</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align: left">Component</th>
+          <th style="text-align: center">Quantity</th>
+          <th style="text-align: left">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align: left"><strong>Raspberry Pi 4</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">
+            Model B (or 3B+, but change address in code if 3B+)
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Breadboard</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">Half-size or full-size</td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Jumper Wires</strong></td>
+          <td style="text-align: center">10+</td>
+          <td style="text-align: left">
+            Male-to-Male (M-M) and Male-to-Female (M-F)
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>LED</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">
+            Any color (Red recommended for alarm)
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Resistor (LED)</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">220Ω or 330Ω (Protects the LED)</td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Active Buzzer</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">
+            3V-5V Active Buzzer (Generates sound when powered)
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Push Button</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">Tactile switch (4-pin or 2-pin)</td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Resistor (Button)</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">10kΩ (For Pull-Down)</td>
+        </tr>
+        <tr>
+          <td style="text-align: left"><strong>Motion Sensor</strong></td>
+          <td style="text-align: center">1</td>
+          <td style="text-align: left">
+            <strong>HC-SR501</strong> PIR Motion Sensor (Recommended)
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>GPIO Pinout Reference</h2>
+
+    <p>
+      The code uses <strong>BCM (Broadcom) GPIO Numbers</strong>. Here is the
+      mapping to the Physical Board Pins on the Raspberry Pi:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align: center">BCM GPIO</th>
+          <th style="text-align: center">Physical Pin</th>
+          <th style="text-align: left">Function</th>
+          <th style="text-align: left">Direction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align: center"><strong>GPIO 17</strong></td>
+          <td style="text-align: center"><strong>Pin 11</strong></td>
+          <td style="text-align: left">LED</td>
+          <td style="text-align: left">Output</td>
+        </tr>
+        <tr>
+          <td style="text-align: center"><strong>GPIO 22</strong></td>
+          <td style="text-align: center"><strong>Pin 15</strong></td>
+          <td style="text-align: left">Buzzer</td>
+          <td style="text-align: left">Output</td>
+        </tr>
+        <tr>
+          <td style="text-align: center"><strong>GPIO 23</strong></td>
+          <td style="text-align: center"><strong>Pin 16</strong></td>
+          <td style="text-align: left">Push Button</td>
+          <td style="text-align: left">Input</td>
+        </tr>
+        <tr>
+          <td style="text-align: center"><strong>GPIO 24</strong></td>
+          <td style="text-align: center"><strong>Pin 18</strong></td>
+          <td style="text-align: left">Sensor</td>
+          <td style="text-align: left">Input</td>
+        </tr>
+        <tr>
+          <td style="text-align: center"><strong>GND</strong></td>
+          <td style="text-align: center">
+            <strong>Pin 6, 9, 14, etc.</strong>
+          </td>
+          <td style="text-align: left">Ground</td>
+          <td style="text-align: left">-</td>
+        </tr>
+        <tr>
+          <td style="text-align: center"><strong>3.3V</strong></td>
+          <td style="text-align: center"><strong>Pin 1, 17</strong></td>
+          <td style="text-align: left">Power</td>
+          <td style="text-align: left">-</td>
+        </tr>
+        <tr>
+          <td style="text-align: center"><strong>5V</strong></td>
+          <td style="text-align: center"><strong>Pin 2, 4</strong></td>
+          <td style="text-align: left">Power (for Sensor)</td>
+          <td style="text-align: left">-</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Step-by-Step Wiring Instructions</h2>
+
+    <p>
+      <strong
+        >Ensure the Raspberry Pi is POWERED OFF while building the
+        circuit.</strong
+      >
+    </p>
+
+    <h3>1. LED (Output) - GPIO 17</h3>
+    <ol>
+      <li>
+        Connect the <strong>Long Leg (+) / Anode</strong> of the LED to
+        <strong>Physical Pin 11 (GPIO 17)</strong>.
+      </li>
+      <li>
+        Connect the <strong>Short Leg (-) / Cathode</strong> to one leg of a
+        <strong>220Ω/330Ω Resistor</strong>.
+      </li>
+      <li>
+        Connect the other leg of the Resistor to a
+        <strong>GND (Ground)</strong> rail on the breadboard.
+      </li>
+      <li>
+        Connect the GND rail to a Ground pin on the Pi (e.g., Physical Pin 6).
+      </li>
+    </ol>
+
+    <h3>2. Buzzer (Output) - GPIO 22</h3>
+    <p><em>Assuming a generic low-power active buzzer.</em></p>
+    <ol>
+      <li>
+        Connect the <strong>Positive (+)</strong> pin of the Buzzer to
+        <strong>Physical Pin 15 (GPIO 22)</strong>.
+      </li>
+      <li>
+        Connect the <strong>Negative (-)</strong> pin of the Buzzer to the
+        <strong>GND</strong> rail.
+      </li>
+    </ol>
+
+    <h3>3. Push Button (Input) - GPIO 23</h3>
+<p><strong>You have a 3-Pin Module (Pins: S, V, G)</strong></p>
+<ul>
+    <li><strong>S (Signal)</strong>: Connect to <strong>Physical Pin 16 (GPIO 23)</strong>. <em>(User Color: Blue)</em></li>
+    <li><strong>V (VCC)</strong>: Connect to <strong>3.3V</strong> (Physical Pin 1).</li>
+    <li><strong>G (GND)</strong>: Connect to <strong>GND</strong> rail.</li>
+    <li><em>Note: Ensure the module outputs HIGH when pressed. If it outputs LOW, the code logic will need to be inverted.</em></li>
+</ul>
+
+<p><strong>If using a raw 2-pin/4-pin switch:</strong></p>
+    <p>
+      <em
+        >Requires a Pull-Down configuration so it stays LOW (0V) until
+        pressed.</em
+      >
+    </p>
+    <ol>
+      <li>Place the Push Button on the breadboard.</li>
+      <li>
+        Connect <strong>One Side</strong> of the button to
+        <strong>3.3V Power</strong> (Physical Pin 1).
+      </li>
+      <li>
+        Connect the <strong>Other Side</strong> of the button to
+        <strong>Physical Pin 16 (GPIO 23)</strong>.
+      </li>
+      <li>
+        <strong>Crucial Step</strong>: Connect a
+        <strong>10kΩ Resistor</strong> from the
+        <strong>Same Side (Pin 16 side)</strong> of the button to
+        <strong>GND</strong>.
+        <ul>
+          <li>
+            <em>Result</em>: When open, Resistor pulls pin to GND (0). When
+            pressed, direct connection overpowers resistor and pulls pin to 3.3V
+            (1).
+          </li>
+        </ul>
+      </li>
+    </ol>
+
+    <h3>4. Motion Sensor (HC-SR501) - GPIO 24</h3>
+    <ol>
+      <li>
+        <strong>VCC</strong>: Connect to <strong>5V Power</strong> (Physical Pin
+        2 or 4). <em>PIRs usually need 5V input.</em>
+      </li>
+      <li><strong>GND</strong>: Connect to <strong>GND</strong>.</li>
+      <li>
+        <strong>OUT / Signal</strong>: Connect to
+        <strong>Physical Pin 18 (GPIO 24)</strong>.
+        <ul>
+          <li>
+            <em>Note</em>: HC-SR501 output is typically 3.3V logic compatible
+            (High when motion detected), which is perfect for the Pi.
+          </li>
+        </ul>
+      </li>
+    </ol>
+
+    <h3>Summary Checklist</h3>
+    <ul>
+      <li>[ ] LED Long leg to GPIO 17?</li>
+      <li>[ ] LED Short leg to Resistor -> Ground?</li>
+      <li>[ ] Buzzer (+) to GPIO 22?</li>
+      <li>[ ] Button connects 3.3V to GPIO 23 when pressed?</li>
+      <li>[ ] Button has 10kΩ resistor pulling GPIO 23 to Ground?</li>
+      <li>[ ] Sensor Out connects to GPIO 24?</li>
+    </ul>
+  </body>
+</html>
