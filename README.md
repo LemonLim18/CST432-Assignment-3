@@ -8,7 +8,7 @@ This report documents the implementation of an alarm system developed for two di
 In both implementations, the system interfaces with a Push Button, PIR Motion Sensor, LED, and Active Buzzer. Use of Active Low logic and Software PWM is consistent across both platforms.
 
 ## 2. Raspberry Pi Implementation (ARM64 Assembly)
-
+![alt text](image-1.png)
 ### 2.1 Hardware Interface
 The program interacts with the hardware using **Memory Mapped GPIO**. Instead of using slow file-based sysfs calls, the program maps the Raspberry Pi's GPIO physical memory address range into its virtual memory space.
 
